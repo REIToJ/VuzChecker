@@ -24,7 +24,7 @@ jobs:
         run: python watch_vhutein.py
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID }}
+          CHAT_IDS: ${{ secrets.CHAT_IDS }}
 
       - name: Persist state
         run: |
