@@ -145,6 +145,7 @@ def main():
             state["initialized"] = True
             # сохраняем пустое состояние, чтобы шаг Persist state создал файл
             save_state(state)
+            print("STATE SAVED:", os.path.abspath(STATE_FILE))
 
         if not new_rows:
             # если раньше что-то было, а теперь пусто - сообщим;
@@ -152,6 +153,7 @@ def main():
                 send_telegram(f"ℹ️ На странице снова нет мест.\n{URL}")
                 state["rows"] = []
                 save_state(state)
+                print("STATE SAVED:", os.path.abspath(STATE_FILE))
             return
 
         added, removed, changed = diff_rows(state["rows"], new_rows)
@@ -159,6 +161,7 @@ def main():
         if not state["rows"]:
             state["rows"] = new_rows
             save_state(state)
+            print("STATE SAVED:", os.path.abspath(STATE_FILE))
             msg = (
                 "🔔 Мониторинг запущен. Обнаружены следующие вакантные места:\n\n"
                 f"{summarize_rows(new_rows)}\n\n{URL}"
@@ -195,6 +198,7 @@ def main():
         # сбросим последний хеш ошибки при успешной проверке
         state["last_error_hash"] = ""
         save_state(state)
+        print("STATE SAVED:", os.path.abspath(STATE_FILE))
 
     except Exception as e:
         err = f"{type(e).__name__}: {e}"
@@ -207,6 +211,7 @@ def main():
                 pass
             state["last_error_hash"] = h
             save_state(state)
+            print("STATE SAVED:", os.path.abspath(STATE_FILE))
 
 
 if __name__ == "__main__":

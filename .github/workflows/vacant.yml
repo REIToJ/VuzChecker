@@ -20,15 +20,34 @@ jobs:
 
       - run: pip install beautifulsoup4 requests
 
+      - name: PWD & list before
+        run: |
+          pwd
+          ls -la
+
+      - name: Show state before
+        run: cat vhutein_vacant.state.json || echo "no state file"
+
       - name: Run watcher
         run: python watch_vhutein.py
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHAT_IDS: ${{ secrets.CHAT_IDS }}
 
+      - name: Show state after
+        run: cat vhutein_vacant.state.json || echo "no state file"
+
+      - name: Ensure state file exists (fallback)
+        run: |
+          [ -f vhutein_vacant.state.json ] || echo '{"rows":[],"last_error_hash":"","initialized":true}' > vhutein_vacant.state.json
+
       - name: Persist state
         run: |
           git config user.name "vacant-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add vhutein_vacant.state.json
-          git diff --quiet && echo "No state change" || git commit -m "Update state" && git push
+          git add -A
+          echo "--- git status (short) ---"
+          git status -s
+          # Коммитим только если есть staged-изменения
+          git diff --staged --quiet || git commit -m "Update state" 
+          git push
