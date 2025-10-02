@@ -30,5 +30,5 @@ jobs:
         run: |
           git config user.name "vacant-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add vhutein_vacant.state.json || true
+          git add vhutein_vacant.state.json
           git diff --quiet && echo "No state change" || git commit -m "Update state" && git push

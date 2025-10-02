@@ -69,7 +69,7 @@ def fetch_rows():
 # ---------- состояние / дифф ----------
 def load_state():
     if not os.path.exists(STATE_FILE):
-        return {"rows": [], "last_error_hash": ""}
+        return {"rows": [], "last_error_hash": "", "initialized": False}
     with open(STATE_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -139,9 +139,10 @@ def main():
         new_rows = fetch_rows()
 
         # Eсли файла состояния ещё не было - сразу один раз шлём стартовый пинг
-        first_run = (state.get("rows") == [])
+        first_run = not state.get("initialized", False)
         if first_run:
-            send_telegram("🔔 Мониторинг запущен. Сообщу при изменениях.")
+            #send_telegram("🔔 Мониторинг запущен. Сообщу при изменениях.")
+            state["initialized"] = True
             # сохраняем пустое состояние, чтобы шаг Persist state создал файл
             save_state(state)
 
