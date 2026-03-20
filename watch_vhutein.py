@@ -1,4 +1,6 @@
 import os, re, hashlib, json, time, requests
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 
 URL = "https://www.vhutein.ru/sveden/vacant/"
@@ -11,6 +13,24 @@ CHAT_IDS = [s.strip() for s in str(CHAT_IDS_ENV).split(",") if s.strip()]
 
 STATE_FILE = "vhutein_vacant.state.json"   # тут храним прошлое состояние и последнюю ошибку
 TIMEOUT = 25
+TIMEZONE = ZoneInfo("Europe/Warsaw")
+SHUTDOWN_AT = datetime(2026, 4, 2, 0, 0, 0, tzinfo=TIMEZONE)
+SHUTDOWN_MESSAGE = (
+    "🛑 *Мониторинг остановлен*\n\n"
+    "Бот проработал 6 месяцев и за это время нашел:\n"
+    "*0 слотов для перевода*\n\n"
+    "*Сообщение для нуля слотов:*\n"
+    "Невезуха. Ну и хрен с ними, им же хуже. "
+    "Не смогут крутой выпускницей похвастаться.\n\n"
+    "Не отчаиваемся. В конце концов, мы можем довольствоваться тем, "
+    "что эта шляпа 6 месяцев крутилась на гитхабе.\n\n"
+    "А значит, мы потратили достаточно ресурсов для того, чтобы отодвинуть "
+    "приближение очередной эры нейрослопа где-то на половинку секунды.\n"
+    "Это ли не достижение, которым можно гордиться?\n\n"
+    "Ну а теперь забываем про учебные проблемы, и идем играть в борду!\n"
+    "(Уверен, что мы за полгода дай Бог только тройку добили)\n\n"
+    "🍀 В конце концов, сегодня - всегда самый лучший день 🐢"
+)
 
 HEADERS = {
     "User-Agent": "VacancyWatcher/1.1 (+check every 12h; contact: you@example.com)",
@@ -69,7 +89,7 @@ def fetch_rows():
 # ---------- состояние / дифф ----------
 def load_state():
     if not os.path.exists(STATE_FILE):
-        return {"rows": [], "last_error_hash": "", "initialized": False}
+        return {"rows": [], "last_error_hash": "", "initialized": False, "shutdown_notified": False}
     with open(STATE_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -120,6 +140,10 @@ def esc(s: str) -> str:
     # Экранирование для Markdown
     return s.replace("_", "\\_").replace("*", "\\*").replace("[", "\\[").replace("`", "\\`")
 
+def should_shutdown_now() -> bool:
+    return datetime.now(TIMEZONE) >= SHUTDOWN_AT
+
+
 def summarize_rows(rows, limit=8):
     if not rows:
         return "—"
@@ -135,6 +159,17 @@ def summarize_rows(rows, limit=8):
 
 def main():
     state = load_state()
+
+    if should_shutdown_now():
+        if not state.get("shutdown_notified", False):
+            try:
+                send_telegram(SHUTDOWN_MESSAGE)
+            finally:
+                state["shutdown_notified"] = True
+                save_state(state)
+                print("STATE SAVED:", os.path.abspath(STATE_FILE))
+        return
+
     try:
         new_rows = fetch_rows()
 
